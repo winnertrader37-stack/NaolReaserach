@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Face Research AI</title>
+
+<style>
+:root {
+  --bg: #060916;
+  --panel: #10172a;
+  --cyan: #45f3ff;
+  --purple: #a78bfa;
+  --text: #f4f7ff;
+  --muted: #9caac4;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background:
+    radial-gradient(ellipse at top, #17264b 0%, transparent 55%),
+    var(--bg);
+  color: var(--text);
+  font-family: Arial, sans-serif;
+  min-height: 100vh;
+}
+
+header {
+  padding: 20px 16px;
+  text-align: center;
+  border-bottom: 1px solid #273653;
+  background: rgba(8, 13, 30, .8);
+}
+
+.logo {
+  font-size: 25px;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+
+.logo span {
+  color: var(--cyan);
+}
+
+.subtitle {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+main {
+  max-width: 1000px;
+  margin: auto;
+  padding: 20px 14px 40px;
+}
+
+.card {
+  background: rgba(16, 23, 42, .92);
+  border: 1px solid #283b60;
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, .22);
+}
+
+h2 {
+  font-size: 19px;
+  margin-bottom: 10px;
+}
+
+.description {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 18px;
+}
+
+.stage {
+  position: relative;
+  min-height: 330px;
+  overflow: hidden;
+  border: 1px solid #264b72;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at center, #152d51 0%, #081326 65%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 800px;
+}
+
+.stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(69,243,255,.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(69,243,255,.06) 1px, transparent 1px);
+  background-size: 24px 24px;
+  mask-image: linear-gradient(to bottom, black, transparent);
+}
+
+.orbit {
+  position: absolute;
+  width: 235px;
+  height: 235px;
+  border: 1px solid rgba(69,243,255,.5);
+  border-radius: 50%;
+  transform: rotateX(65deg);
+  animation: orbit 7s linear infinite;
+}
+
+.orbit.two {
+  width: 280px;
+  height: 280px;
+  border-color: rgba(167,139,250,.45);
+  animation-direction: reverse;
+  animation-duration: 10s;
+}
+
+.orbit.three {
+  width: 190px;
+  height: 190px;
+  border-style: dashed;
+  animation-duration: 12s;
+}
+
+@keyframes orbit {
+  from { transform: rotateX(65deg) rotateZ(0deg); }
+  to { transform: rotateX(65deg) rotateZ(360deg); }
+}
+
+.scan-frame {
+  position: relative;
+  width: 190px;
+  height: 240px;
+  border: 1px solid rgba(69,243,255,.55);
+  border-radius: 90px 90px 65px 65px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
+  background: rgba(8, 17, 37, .65);
+  box-shadow: 0 0 30px rgba(69,243,255,.12);
+}
+
+#preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: none;
+}
+
+.face-placeholder {
+  font-size: 90px;
+  opacity: .8;
+  filter: drop-shadow(0 0 14px rgba(69,243,255,.5));
+}
+
+.scan-line {
+  position: absolute;
+  z-index: 4;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--cyan);
+  box-shadow: 0 0 18px 4px rgba(69,243,255,.6);
+  opacity: 0;
+}
+
+.scanning .scan-line {
+  opacity: 1;
+  animation: scan 2s ease-in-out infinite alternate;
+}
+
+@keyframes scan {
+  from { top: 0; }
+  to { top: calc(100% - 3px); }
+}
+
+.corner {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-color: var(--cyan);
+  border-style: solid;
+  z-index: 5;
+}
+
+.c1 { top: 12px; left: 12px; border-width: 2px 0 0 2px; }
+.c2 { top: 12px; right: 12px; border-width: 2px 2px 0 0; }
+.c3 { bottom: 12px; left: 12px; border-width: 0 0 2px 2px; }
+.c4 { bottom: 12px; right: 12px; border-width: 0 2px 2px 0; }
+
+.stage-label {
+  position: absolute;
+  z-index: 6;
+  bottom: 15px;
+  font-size: 11px;
+  color: var(--cyan);
+  letter-spacing: 2px;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+button, .upload-label {
+  min-height: 46px;
+  padding: 13px;
+  border: 1px solid #3d597d;
+  border-radius: 11px;
+  background: #172641;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+}
+
+.primary {
+  grid-column: 1 / -1;
+  color: #06101c;
+  background: linear-gradient(100deg, #45f3ff, #a78bfa);
+  border: none;
+}
+
+button:hover, .upload-label:hover {
+  filter: brightness(1.12);
+}
+
+input[type=file] {
+  display: none;
+}
+
+#cameraBox {
+  display: none;
+  margin-top: 16px;
+}
+
+video {
+  width: 100%;
+  max-height: 360px;
+  border-radius: 12px;
+  background: #000;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 17px;
+}
+
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #68758c;
+}
+
+.scanning + .status .dot {
+  background: var(--cyan);
+  box-shadow: 0 0 10px var(--cyan);
+}
+
+.progress-track {
+  height: 7px;
+  background: #25334c;
+  border-radius: 20px;
+  overflow: hidden;
+  margin-top: 13px;
+}
+
+.progress-bar {
+  width: 0;
+  height: 100%;
+  background: linear-gradient(90deg, var(--cyan), var(--purple));
+  transition: width .35s ease;
+}
+
+#progressText {
+  text-align: right;
+  font-size: 12px;
+  color: var(--cyan);
+  margin-top: 7px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 14px;
+  background: #080f20;
+  border: 1px solid #33496b;
+  border-radius: 10px;
+  color: white;
+  font-size: 16px;
+  margin: 12px 0;
+}
+
+.search-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.search-link {
+  text-decoration: none;
+  display: block;
+  padding: 14px 10px;
+  text-align: center;
+  border-radius: 11px;
+  border: 1px solid #304562;
+  background: #0c172b;
+  color: #b9dfff;
+  font-size: 13px;
+}
+
+.search-link:hover {
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+
+.notice {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #9caac4;
+  margin-top: 16px;
+}
+
+footer {
+  text-align: center;
+  padding: 20px;
+  color: #8292ac;
+  font-size: 12px;
+}
+
+@media (min-width: 700px) {
+  .layout {
+    display: grid;
+    grid-template-columns: 1.1fr .9fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  .card {
+    margin-bottom: 0;
+  }
+
+  .stage {
+    min-height: 390px;
+  }
+}
+
+@media (max-width: 380px) {
+  .logo { font-size: 21px; }
+  .card { padding: 14px; }
+  .stage { min-height: 290px; }
+  .scan-frame { transform: scale(.85); }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">◈ FACE <span>RESEARCH AI</span></div>
+  <div class="subtitle">VISUAL SEARCH · PUBLIC WEB DISCOVERY</div>
+</header>
+
+<main>
+  <div class="layout">
+
+    <section class="card">
+      <h2>01 / Visual Scan</h2>
+      <p class="description">
+        Upload an image or capture a photo to prepare a visual
+        search. The animated scanner is a visual interface,
+        not an identity-recognition engine.
+      </p>
+
+      <div class="stage" id="stage">
+        <div class="orbit"></div>
+        <div class="orbit two"></div>
+        <div class="orbit three"></div>
+
+        <div class="scan-frame">
+          <div class="face-placeholder" id="placeholder">◎</div>
+          <img id="preview" alt="Selected image preview">
+          <div class="scan-line"></div>
+          <div class="corner c1"></div>
+          <div class="corner c2"></div>
+          <div class="corner c3"></div>
+          <div class="corner c4"></div>
+        </div>
+
+        <div class="stage-label" id="stageLabel">
+          READY FOR IMAGE
+        </div>
+      </div>
+
+      <input id="photoInput" type="file" accept="image/*">
+
+      <div class="controls">
+        <label class="upload-label" for="photoInput">
+          📁 Upload Photo
+        </label>
+
+        <button type="button" id="cameraButton">
+          📷 Open Camera
+        </button>
+
+        <button type="button" class="primary" id="scanButton">
+          ✦ Start Visual Search
+        </button>
+      </div>
+
+      <div id="cameraBox">
+        <video id="video" autoplay playsinline></video>
+        <div class="controls">
+          <button type="button" id="captureButton">
+            Capture Photo
+          </button>
+          <button type="button" id="closeCamera">
+            Close Camera
+          </button>
+        </div>
+      </div>
+
+      <div class="status" aria-live="polite">
+        <span class="dot"></span>
+        <span id="statusText">Waiting for an image</span>
+      </div>
+
+      <div class="progress-track">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+
+      <div id="progressText">0%</div>
+
+      <p class="notice">
+        Privacy: this prototype keeps the selected image in your
+        browser. Starting the animation does not upload it to a
+        server or automatically search social media.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>02 / Public Web Search</h2>
+
+      <p class="description">
+        Search publicly accessible pages using a name or
+        username. Results must be checked manually.
+      </p>
+
+      <label for="query">Name or username</label>
+
+      <input
+        class="search-input"
+        id="query"
+        type="text"
+        maxlength="150"
+        placeholder="Enter public name or username"
+      >
+
+      <button type="button" class="primary" id="searchButton">
+        Search Public Web
+      </button>
+
+      <div id="results" class="search-grid"></div>
+
+      <p class="notice">
+        Search links do not prove that a profile belongs to the
+        person shown in an image. No private accounts or messages
+        are accessed.
+      </p>
+    </section>
+
+  </div>
+</main>
+
+<footer>
+  FACE RESEARCH AI · VISUAL SEARCH PROTOTYPE
+</footer>
+
+<script>
+const photoInput = document.getElementById("photoInput");
+const preview = document.getElementById("preview");
+const placeholder = document.getElementById("placeholder");
+const stage = document.getElementById("stage");
+const stageLabel = document.getElementById("stageLabel");
+const statusText = document.getElementById("statusText");
+const progressBar = document.getElementById("progressBar");
+const progressText = document.getElementById("progressText");
+
+let selectedFile = null;
+let imageURL = null;
+let cameraStream = null;
+let scanTimer = null;
+
+function displayImage(file) {
+  if (!file || !file.type.startsWith("image/")) {
+    alert("Please select a valid image.");
+    return;
+  }
+
+  if (file.size > 10 * 1024 * 1024) {
+    alert("Image must be smaller than 10 MB.");
+    return;
+  }
+
+  selectedFile = file;
+
+  if (imageURL) URL.revokeObjectURL(imageURL);
+
+  imageURL = URL.createObjectURL(file);
+  preview.src = imageURL;
+  preview.style.display = "block";
+  placeholder.style.display = "none";
+
+  resetScan();
+  statusText.textContent = "Image loaded — ready for visual search";
+  stageLabel.textContent = "IMAGE READY";
+}
+
+photoInput.addEventListener("change", function() {
+  if (this.files.length) {
+    displayImage(this.files[0]);
+  }
+});
+
+function resetScan() {
+  clearInterval(scanTimer);
+  stage.classList.remove("scanning");
+  progressBar.style.width = "0%";
+  progressText.textContent = "0%";
+}
+
+document.getElementById("cameraButton").addEventListener(
+  "click",
+  async function() {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      alert("Camera requires HTTPS and browser permission.");
+      return;
+    }
+
+    try {
+      cameraStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user" },
+        audio: false
+      });
+
+      document.getElementById("video").srcObject = cameraStream;
+      document.getElementById("cameraBox").style.display = "block";
+      statusText.textContent = "Camera is active";
+    } catch (error) {
+      alert("Camera access denied or unavailable.");
+    }
+  }
+);
+
+document.getElementById("captureButton").addEventListener(
+  "click",
+  function() {
+    const video = document.getElementById("video");
+
+    if (!video.videoWidth) {
+      alert("Wait until the camera is ready.");
+      return;
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    canvas.getContext("2d").drawImage(
+      video, 0, 0, canvas.width, canvas.height
+    );
+
+    canvas.toBlob(function(blob) {
+      if (!blob) return;
+
+      const file = new File(
+        [blob], "captured-photo.jpg", { type: "image/jpeg" }
+      );
+
+      photoInput.value = "";
+      displayImage(file);
+      closeCamera();
+    }, "image/jpeg", 0.9);
+  }
+);
+
+function closeCamera() {
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(track => track.stop());
+    cameraStream = null;
+  }
+
+  document.getElementById("video").srcObject = null;
+  document.getElementById("cameraBox").style.display = "none";
+}
+
+document.getElementById("closeCamera").addEventListener(
+  "click", closeCamera
+);
+
+document.getElementById("scanButton").addEventListener(
+  "click", function() {
+    if (!selectedFile) {
+      alert("Upload a photo or capture one first.");
+      return;
+    }
+
+    resetScan();
+    stage.classList.add("scanning");
+    stageLabel.textContent = "PREPARING SEARCH";
+    statusText.textContent = "Preparing image for visual search";
+
+    let progress = 0;
+
+    scanTimer = setInterval(function() {
+      progress = Math.min(progress + 5, 100);
+      progressBar.style.width = progress + "%";
+      progressText.textContent = progress + "%";
+
+      if (progress >= 100) {
+        clearInterval(scanTimer);
+        stage.classList.remove("scanning");
+        stageLabel.textContent = "READY FOR SEARCH";
+        statusText.textContent =
+          "Animation complete — no remote search was performed";
+
+        alert(
+          "The visual scan animation is complete. To search " +
+          "the internet automatically, connect a supported " +
+          "reverse-image-search service or API."
+        );
+      }
+    }, 120);
+  }
+);
+
+document.getElementById("searchButton").addEventListener(
+  "click", function() {
+    const query = document.getElementById("query").value.trim();
+
+    if (!query) {
+      alert("Enter a public name or username first.");
+      return;
+    }
+
+    const q = encodeURIComponent(query);
+
+    const services = [
+      ["Google", "https://www.google.com/search?q=" + q],
+      ["Google Images", "https://www.google.com/search?tbm=isch&q=" + q],
+      ["TikTok", "https://www.tiktok.com/search?q=" + q],
+      ["YouTube", "https://www.youtube.com/results?search_query=" + q],
+      ["Facebook", "https://www.facebook.com/search/top/?q=" + q],
+      ["Instagram public pages",
+        "https://www.google.com/search?q=" +
+        encodeURIComponent("site:instagram.com " + query)],
+      ["X", "https://x.com/search?q=" + q],
+      ["Telegram public pages",
+        "https://www.google.com/search?q=" +
+        encodeURIComponent("site:t.me " + query)],
+      ["Snapchat public pages",
+        "https://www.google.com/search?q=" +
+        encodeURIComponent("site:snapchat.com " + query)]
+    ];
+
+    const results = document.getElementById("results");
+    results.replaceChildren();
+
+    services.forEach(function(item) {
+      const a = document.createElement("a");
+      a.className = "search-link";
+      a.href = item[1];
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.textContent = "↗ " + item[0];
+      results.appendChild(a);
+    });
+  }
+);
+
+window.addEventListener("beforeunload", function() {
+  closeCamera();
+  clearInterval(scanTimer);
+  if (imageURL) URL.revokeObjectURL(imageURL);
+});
+</script>
+
+</body>
+</html>
